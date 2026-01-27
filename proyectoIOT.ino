@@ -117,3 +117,33 @@ void controlarPuerta(long distancia) {
     digitalWrite(LED_PUERTA, HIGH); // Enciende LED indicador
   }
 }
+/*LLUVIA */
+// Controla el servo según el nivel de humedad detectado
+void controlarLluvia(int lluviaDigital, int lluviaAnalogica) {
+
+  unsigned long ahora = millis();
+
+  // Mostrar valores del sensor
+  Serial.print("Lluvia DO: ");
+  Serial.println(lluviaDigital);
+  Serial.print(" | Lluvia AO: ");
+  Serial.println(lluviaAnalogica);
+
+  // Rango donde se considera lluvia
+  if (lluviaAnalogica >= 0 && lluviaAnalogica <= 500) {
+    estaLloviendo = true;
+    ultimoDetectadoLluvia = ahora;
+    servoLluvia.write(0);  // Cierra protección
+    Serial.println(" --> Lluvia detectada, servo a 0°");
+  } else {
+    // Sensor completamente seco
+    if (lluviaAnalogica > 600) {
+      estaLloviendo = false;
+      servoLluvia.write(90); // Abre protección
+      Serial.println(" --> Sensor seco (AO > 600), servo a 90°");
+    } else {
+      // Zona intermedia (húmedo)
+      Serial.println(" --> Aún húmedo, servo sin cambios");
+    }
+  }
+}
