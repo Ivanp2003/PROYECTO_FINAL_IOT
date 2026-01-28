@@ -147,3 +147,58 @@ void controlarLluvia(int lluviaDigital, int lluviaAnalogica) {
     }
   }
 }
+/* ===== APLAUSO ===== */
+// Detecta aplausos usando un sensor de sonido
+void detectarAplauso() {
+  bool sonidoActual = digitalRead(SOUND_PIN);
+  unsigned long ahora = millis();
+
+  // Detección de flanco y antirebote
+  if (sonidoActual == HIGH && sonidoAnterior == LOW &&
+      ahora - ultimoAplauso > TIEMPO_REBOTE) {
+
+    estadoLED = !estadoLED;               // Cambia estado del LED
+    digitalWrite(LED_PIN, estadoLED);     // Aplica el estado
+    ultimoAplauso = ahora;                // Guarda tiempo
+    contadorAplausos++;                   // Incrementa contador
+  }
+
+  sonidoAnterior = sonidoActual;
+}
+
+/* ================= SETUP ================= */
+// Configuración inicial
+void setup() {
+  Serial.begin(9600);          // Comunicación con PC
+  esp8266.begin(115200);       // Comunicación inicial con ESP8266
+
+  // Configuración de pines
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(PIN_LLUVIA_DO, INPUT);
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(SOUND_PIN, INPUT);
+  pinMode(LED_PUERTA, OUTPUT);
+
+  // Asociación de servos
+  servoPuerta.attach(SERVO_PUERTA_PIN);
+  servoLluvia.attach(SERVO_LLUVIA_PIN);
+
+  // Posiciones iniciales
+  servoPuerta.write(0);
+  servoLluvia.write(0);
+
+  digitalWrite(LED_PIN, LOW);
+  digitalWrite(LED_PUERTA, LOW);
+
+  // Configuración de velocidad del ESP8266
+  delay(2000);
+  esp8266.println("AT+UART_DEF=9600,8,1,0,0");
+  delay(2000);
+  esp8266.begin(9600);
+
+  // Conexión WiFi
+  conectarWiFi();
+
+  Serial.println("Sistema iniciado - Monitoreo activo");
+}
