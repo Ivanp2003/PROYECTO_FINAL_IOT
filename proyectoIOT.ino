@@ -258,4 +258,30 @@ void conectarWiFi() {
   String cmd = "AT+CWJAP=\"" + ssid + "\",\"" + password + "\"";
   esp8266.println(cmd);
   delay(6000);
-}uenta
+}
+// Envío de datos a ThingSpeak
+void enviarDatos(long distancia, long lluvia, int aplausos) {
+
+  // Abre conexión TCP
+  esp8266.println("AT+CIPSTART=\"TCP\",\"api.thingspeak.com\",80");
+  delay(2000);
+
+  // Construcción del GET HTTP
+  String datos = "GET /update?api_key=" + apiKey +
+                 "&field1=" + String(distancia) +
+                 "&field2=" + String(lluvia) +
+                 "&field3=" + String(aplausos) +
+                 " HTTP/1.1\r\nHost: api.thingspeak.com\r\n\r\n";
+
+  // Envío del tamaño del paquete
+  esp8266.print("AT+CIPSEND=");
+  esp8266.println(datos.length());
+  delay(1000);
+
+  // Envío de los datos
+  esp8266.print(datos);
+  delay(2000);
+
+  // Cierra la conexión
+  esp8266.println("AT+CIPCLOSE");
+}
