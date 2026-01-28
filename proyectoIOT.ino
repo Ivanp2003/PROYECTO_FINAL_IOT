@@ -202,3 +202,60 @@ void setup() {
 
   Serial.println("Sistema iniciado - Monitoreo activo");
 }
+
+/* ================= LOOP ================= */
+// Ejecución continua
+void loop() {
+
+  // Detección de aplausos en tiempo real
+  detectarAplauso();
+
+  unsigned long ahora = millis();
+
+  // Lectura periódica de sensores
+  if (ahora - ultimaLectura >= INTERVALO_SENSORES) {
+    ultimaLectura = ahora;
+
+    long distancia = medirDistancia();
+    int lluviaDO = digitalRead(PIN_LLUVIA_DO);
+    int lluviaAO = analogRead(PIN_LLUVIA_AO);
+
+    controlarPuerta(distancia);
+    controlarLluvia(lluviaDO, lluviaAO);
+
+    // Acumulación para promedios
+    sumaDistancia += distancia;
+    sumaLluvia += lluviaAO;
+    conteoLecturas++;
+  }
+
+  // Envío de datos a ThingSpeak
+  if (ahora - ultimoEnvio >= INTERVALO_ENVIO) {
+    ultimoEnvio = ahora;
+
+    long promDistancia = sumaDistancia / conteoLecturas;
+    long promLluvia = sumaLluvia / conteoLecturas;
+
+    enviarDatos(promDistancia, promLluvia, contadorAplausos);
+
+    // Reinicio de acumuladores
+    sumaDistancia = 0;
+    sumaLluvia = 0;
+    conteoLecturas = 0;
+    contadorAplausos = 0;
+  }
+}
+
+/* ================= ESP8266 ================= */
+// Conexión del ESP8266 a la red WiFi
+void conectarWiFi() {
+  esp8266.println("AT+RST");      // Reinicio del módulo
+  delay(3000);
+  esp8266.println("AT+CWMODE=1"); // Modo estación
+  delay(1000);
+
+  // Comando de conexión WiFi
+  String cmd = "AT+CWJAP=\"" + ssid + "\",\"" + password + "\"";
+  esp8266.println(cmd);
+  delay(6000);
+}uenta
